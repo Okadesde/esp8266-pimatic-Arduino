@@ -10,15 +10,15 @@
 //#define DHTTYPE DHT22
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        !!PLEASE CHANGE THESE!!
-const char* ssid = "YOUR_WiFi_NAME";
-const char* password = "YOUR_WiFi_PASSWORD";
-const char* espName = "ESP_NAME";
+const char* ssid = "WiFi";
+const char* password = "WiFi Password";
+const char* espName = "esp01";
 long sendInterval = 60000; //in millis
 
-String Username = "PIMATIC_USERNAME";
-String Password = "PIMATIC_PASSWORD";
+String Username = "Pimatic user";
+String Password = "Pimatic password";
 
-const char* host = "PIMATIC_IP";
+const char* host = "Pimatic Server";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        NETWORK
 ESP8266WebServer server(80);
@@ -31,6 +31,11 @@ const int httpPort = 80;
 float temperature = 0.0;
 float humidity  = 0.0;
 String ClientIP;
+
+
+
+//uint8_t DHTPIN = 2;  //data pin, GPIO2
+//uint8_t DHTTYPE = DHT22;
 
 DHT dht(2, DHT22, 20);
 
@@ -50,6 +55,11 @@ String panelBodySymbol   =  "<div class='panel panel-default'><div class='panel-
 String panelBodyName     =  "'></span> ";
 String panelBodyValue      =  "<span class='pull-right'>";
 String panelBodyEnd        =  "</span></div></div>";
+
+String inputBodyStart      =  "<div class='panel panel-default'><div class='panel-body'>";
+String inputBodyName    =  "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
+String inputBodyClose      =  "</span><input type='text' class='form-control' aria-describedby='basic-addon1'></div></div>";
+String inputBodyEnd        =  "</div><div class='panel-footer clearfix'><div class='pull-right'><a href='#' class='btn btn-default'>Save</a></div></div>";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
 void handle_root() {
@@ -89,14 +99,19 @@ void handle_root() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         CONFIG - Client
 void handle_cliconf() {
   
-  String data = "WIP";
+  String title1 = panelHeaderName + String("Client Configuration") + panelHeaderEnd;
+  
+  String data = title1 + inputBodyStart + inputBodyName + String("Name") + inputBodyClose + inputBodyName + String("Device Type") + inputBodyClose + inputBodyName + String("Interval in seconds") + inputBodyClose + inputBodyEnd;
   server.send ( 200, "text/html", header + navbarNonActive + containerStart + data + containerEnd + siteEnd );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         CONFIG - Server
 void handle_serconf() {
   
-  String data = "WIP";
+  String title1 = panelHeaderName + String("Client Configuration") + panelHeaderEnd;
+  
+  String data = title1 + inputBodyStart + inputBodyName + String("Pimativ Server") + inputBodyClose + inputBodyName + String("Username") + inputBodyClose + inputBodyName + String("Password") + inputBodyClose + inputBodyEnd;
+  
   server.send ( 200, "text/html", header + navbarNonActive + containerStart + data + containerEnd + siteEnd);
 }
 
