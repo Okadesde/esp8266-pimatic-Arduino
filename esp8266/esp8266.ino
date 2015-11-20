@@ -11,11 +11,11 @@
 String ssid		= "WiFi SSID";
 String password	= "WiFi Password";
 
-String espName		= "esp01";
+String espName    = "esp01";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        NETWORK
-ESP8266WebServer	server(80);
-MDNSResponder		mdns;
+ESP8266WebServer  server(80);
+MDNSResponder   mdns;
 
 const char* APssid = "ESPap";
 const char* APpassword = "123456789";
@@ -23,19 +23,21 @@ const char* APpassword = "123456789";
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         GLOBAL VARIABLES
-long		lastInterval	= 0;
-const int	httpPort		= 80;
-float		temperature		= 0.0;
-float		humidity		= 0.0;
+long    lastInterval  = 0;
+const int httpPort    = 80;
+float   temperature   = 0.0;
+float   humidity    = 0.0;
 
-String deviceType		= "DHT22";
-long sendInterval		= 60000; //in millis
+String deviceType   = "DHT22";
+long sendInterval   = 10000; //in millis
 
-String Username			= "admin";
-String Password			= "fussel";
+String Username     = "sensors";
+String Password     = "iamasensor";
 
-String host		= "192.168.178.1";
+char authVal[40];  
+char authValEncoded[40];
 
+String host   = "192.168.0.100";
 
 String ClientIP;
 // send data
@@ -48,34 +50,34 @@ WiFiClient client;
 DHT dht(2, DHT22, 20);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
-String header				=  "<html lang='en'><head><title>ESP8266 Pimatic Client</title><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'><script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script><script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head><body>";
-String navbar				=  "<nav class='navbar navbar-default'><div class='container-fluid'><div class='navbar-header'><a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a></div><div><ul class='nav navbar-nav'><li class='active'><a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li><li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'><li><a href='/cliconf'>Client</a></li><li><a href='/serconf'>Server</a></li></ul></li></ul></div></div></nav>  "; 
-String navbarNonActive		= "<nav class='navbar navbar-default'><div class='container-fluid'><div class='navbar-header'><a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a></div><div><ul class='nav navbar-nav'><li><a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li><li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'><li><a href='/cliconf'>Client</a></li><li><a href='/serconf'>Server</a></li></ul></li></ul></div></div></nav>  ";
-String containerStart		=  "<div class='container'><div class='row'>";
-String containerEnd			=  "<div class='clearfix visible-lg'></div></div></div>";
-String siteEnd				=  "</body></html>";
+String header       =  "<html lang='en'><head><title>ESP8266 Pimatic Client</title><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'><script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script><script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head><body>";
+String navbar       =  "<nav class='navbar navbar-default'><div class='container-fluid'><div class='navbar-header'><a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a></div><div><ul class='nav navbar-nav'><li class='active'><a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li><li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'><li><a href='/cliconf'>Client</a></li><li><a href='/serconf'>Server</a></li></ul></li></ul></div></div></nav>  "; 
+String navbarNonActive    = "<nav class='navbar navbar-default'><div class='container-fluid'><div class='navbar-header'><a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a></div><div><ul class='nav navbar-nav'><li><a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li><li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'><li><a href='/cliconf'>Client</a></li><li><a href='/serconf'>Server</a></li></ul></li></ul></div></div></nav>  ";
+String containerStart   =  "<div class='container'><div class='row'>";
+String containerEnd     =  "<div class='clearfix visible-lg'></div></div></div>";
+String siteEnd        =  "</body></html>";
   
-String panelHeaderName		=  "<div class='col-md-4'><div class='page-header'><h1>";
-String panelHeaderEnd		=  "</h1></div>";
-String panelEnd				=  "</div>";
+String panelHeaderName    =  "<div class='col-md-4'><div class='page-header'><h1>";
+String panelHeaderEnd   =  "</h1></div>";
+String panelEnd       =  "</div>";
   
-String panelBodySymbol		=  "<div class='panel panel-default'><div class='panel-body'><span class='glyphicon glyphicon-";
-String panelBodyName		=  "'></span> ";
-String panelBodyValue		=  "<span class='pull-right'>";
-String panelBodyEnd			=  "</span></div></div>";
+String panelBodySymbol    =  "<div class='panel panel-default'><div class='panel-body'><span class='glyphicon glyphicon-";
+String panelBodyName    =  "'></span> ";
+String panelBodyValue   =  "<span class='pull-right'>";
+String panelBodyEnd     =  "</span></div></div>";
 
-String inputBodyStart		=  "<form action='' method='POST'><div class='panel panel-default'><div class='panel-body'>";
-String inputBodyName		=  "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
-String inputBodyPOST		=  "</span><input type='text' name='";
-String inputBodyClose		=  "' class='form-control' aria-describedby='basic-addon1'></div></div>";
-String inputBodyEnd			=  "</div><div class='panel-footer clearfix'><div class='pull-right'><button type='submit' class='btn btn-default'>Send</button></div></div></div></form>";
+String inputBodyStart   =  "<form action='' method='POST'><div class='panel panel-default'><div class='panel-body'>";
+String inputBodyName    =  "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
+String inputBodyPOST    =  "</span><input type='text' name='";
+String inputBodyClose   =  "' class='form-control' aria-describedby='basic-addon1'></div></div>";
+String inputBodyEnd     =  "</div><div class='panel-footer clearfix'><div class='pull-right'><button type='submit' class='btn btn-default'>Send</button></div></div></div></form>";
 
 
-//String landingNav			=	"<nav class='navbar navbar-default'> <div class='container-fluid'> <div class='navbar-header'> <a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a> </div></div></nav><br><br><br>";
-//String landingStartPartA	=	"<div class='container'> <div class='row' > <div class='col-md-offset-3 col-md-6'> <div class='panel panel-default'> <div class='panel-heading'> Please login to your WiFi Network </div><div class='panel-body'> <form method='post' action=''> <div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>Wifi Name </span><input type='text' class='form-control' placeholder='Enter SSID' aria-describedby='basic-addon1' name='wifiname'></div></div>";
+//String landingNav     = "<nav class='navbar navbar-default'> <div class='container-fluid'> <div class='navbar-header'> <a class='navbar-brand' href='/'>ESP8266 Pimatic Client</a> </div></div></nav><br><br><br>";
+//String landingStartPartA  = "<div class='container'> <div class='row' > <div class='col-md-offset-3 col-md-6'> <div class='panel panel-default'> <div class='panel-heading'> Please login to your WiFi Network </div><div class='panel-body'> <form method='post' action=''> <div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>Wifi Name </span><input type='text' class='form-control' placeholder='Enter SSID' aria-describedby='basic-addon1' name='wifiname'></div></div>";
 //String landingStartPartB    =   "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>WiFi Pass </span><input type='password' class='form-control' placeholder='Password' aria-describedby='basic-addon1' name='wifipass'></div></div><div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>Device Name ";
 //String landingStartPartC      =    "</span><input type='text' class='form-control' placeholder='Name your device e.g. kitchen' aria-describedby='basic-addon1' name='devicename'></div></div><a class='btn btn-primary' data-toggle='collapse' href='#collapseExample' aria-expanded='false' aria-controls='collapseExample'> Available Networks </a> <div class='pull-right'> <button type='submit' class='btn btn-default'>Send</button> </div></form> <div class='collapse' id='collapseExample'> <div class='well'>";
-//String landingEnd			=	"</div></div></div></div></div></div></body></html>";
+//String landingEnd     = "</div></div></div></div></div></div></body></html>";
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
@@ -88,20 +90,20 @@ void handle_root() {
   ClientIP = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
   delay(500);
   
-  String title1			= panelHeaderName + String("Sensor Data") + panelHeaderEnd;
-  String Humidity		= panelBodySymbol + String("tint") + panelBodyName + String("Humidity") + panelBodyValue + humidity + String("%") + panelBodyEnd;
+  String title1     = panelHeaderName + String("Sensor Data") + panelHeaderEnd;
+  String Humidity   = panelBodySymbol + String("tint") + panelBodyName + String("Humidity") + panelBodyValue + humidity + String("%") + panelBodyEnd;
   String Temperature    = panelBodySymbol + String("fire") + panelBodyName + String("Temperature") + panelBodyValue + temperature + String("°C") + panelBodyEnd + panelEnd;
   
-  String title2			= panelHeaderName + String("Client Settings") + panelHeaderEnd;
+  String title2     = panelHeaderName + String("Client Settings") + panelHeaderEnd;
   String IPAddClient    = panelBodySymbol + String("globe") + panelBodyName + String("IP Address") + panelBodyValue + ClientIP + panelBodyEnd;
-  String DeviceType		= panelBodySymbol + String("scale") + panelBodyName + String("Device Type") + panelBodyValue + deviceType + panelBodyEnd;
-  String ClientName		= panelBodySymbol + String("tag") + panelBodyName + String("Client Name") + panelBodyValue + espName + panelBodyEnd;
-  String Interval		= panelBodySymbol + String("hourglass") + panelBodyName + String("Interval") + panelBodyValue + sendInterval + String(" millis") + panelBodyEnd;
-  String Uptime			= panelBodySymbol + String("time") + panelBodyName + String("Uptime") + panelBodyValue + hour() + String(" h ") + minute() + String(" min ") + second() + String(" sec") + panelBodyEnd + panelEnd;
+  String DeviceType   = panelBodySymbol + String("scale") + panelBodyName + String("Device Type") + panelBodyValue + deviceType + panelBodyEnd;
+  String ClientName   = panelBodySymbol + String("tag") + panelBodyName + String("Client Name") + panelBodyValue + espName + panelBodyEnd;
+  String Interval   = panelBodySymbol + String("hourglass") + panelBodyName + String("Interval") + panelBodyValue + sendInterval + String(" millis") + panelBodyEnd;
+  String Uptime     = panelBodySymbol + String("time") + panelBodyName + String("Uptime") + panelBodyValue + hour() + String(" h ") + minute() + String(" min ") + second() + String(" sec") + panelBodyEnd + panelEnd;
   
-  String title3			= panelHeaderName + String("Server Settings") + panelHeaderEnd;
-  String IPAddServ		= panelBodySymbol + String("globe") + panelBodyName + String("IP Address") + panelBodyValue + host + panelBodyEnd;
-  String User			= panelBodySymbol + String("user") + panelBodyName + String("Username") + panelBodyValue + Username + panelBodyEnd + panelEnd;
+  String title3     = panelHeaderName + String("Server Settings") + panelHeaderEnd;
+  String IPAddServ    = panelBodySymbol + String("globe") + panelBodyName + String("IP Address") + panelBodyValue + host + panelBodyEnd;
+  String User     = panelBodySymbol + String("user") + panelBodyName + String("Username") + panelBodyValue + Username + panelBodyEnd + panelEnd;
   
   
   //String data = title1 + Humidity + Temperature + title2 + IPAddClient + DeviceType + ClientName + Interval + Uptime + title3 + IPAddServ + User;
@@ -144,7 +146,7 @@ void handle_serconf() {
     host = payload;
   }
   Serial.println(payload);
-
+  
   payload=server.arg("user");
   if (payload.length() > 0 ) {
     Username = payload;
@@ -153,13 +155,13 @@ void handle_serconf() {
 
   payload=server.arg("password");
   if (payload.length() > 0 ) {
-    Password = payload.toInt();
+    Password = payload;
   }
   Serial.println(payload);
   
   String title1 = panelHeaderName + String("Server Configuration") + panelHeaderEnd;
   
-  String data = title1 + inputBodyStart + inputBodyName + String("Pimativ Server") + inputBodyPOST + String("server")  + inputBodyClose + inputBodyName + String("Username") + inputBodyPOST + String("user") + inputBodyClose + inputBodyName + String("Password") + inputBodyPOST + String("password") + inputBodyClose + inputBodyEnd;
+  String data = title1 + inputBodyStart + inputBodyName + String("Pimatic Server") + inputBodyPOST + String("server")  + inputBodyClose + inputBodyName + String("Username") + inputBodyPOST + String("user") + inputBodyClose + inputBodyName + String("Password") + inputBodyPOST + String("password") + inputBodyClose + inputBodyEnd;
   
   server.send ( 200, "text/html", header + navbarNonActive + containerStart + data + containerEnd + siteEnd);
   
@@ -175,7 +177,6 @@ void landing() {
     ssid = payload;
   }
   Serial.println(payload);
-
   payload=server.arg("wifipass");
   if (payload.length() > 0 ) {
     password = payload;
@@ -198,8 +199,8 @@ void send_data() {
   String yourdata;
   
   // get data
-  float h	= dht.readHumidity();
-  float t	= dht.readTemperature();
+  float h = 55; //dht.readHumidity();
+  float t = 1; //dht.readTemperature();
   
   //check erros
   if (isnan(h) || isnan(t)) {
@@ -207,36 +208,38 @@ void send_data() {
     return;
   }
   
-  temperature	= t;
-  humidity		= h;
+  temperature += t;
+  humidity    = h;
+    
+  char host_char_array[host.length()+1];
+  host.toCharArray(host_char_array,host.length()+1);
   
-  
-  
-  
-  if (!client.connect(host.toInt(), httpPort)) {
+  if (!client.connect(host_char_array, httpPort)) {
     Serial.println("connection failed");
     return;
   }
   
   // calculate Base64Login
+  memset(authVal,0,40);
+  (Username + String(":") + Password).toCharArray(authVal, 40);
+  memset(authValEncoded,0,40);
+  base64_encode(authValEncoded, authVal, (Username + String(":") + Password).length());
   
+//  char base64login[40];
   
-  
-  char base64login[40];
-  
-  (Username + String(":") + Password).toCharArray(base64login, 40);
+//  (Username + String(":") + Password).toCharArray(base64login, 40);
   
   //Send Humidity
-  yourdata = "{\"type\": \"value\", \"valueOrExpression\": \"" + String(h) + "\"}";
+  yourdata = "{\"type\": \"value\", \"valueOrExpression\": \"" + String(humidity) + "\"}";
   
   
     client.print("PATCH /api/variables/");
     client.print(espName);
     client.print("-hum HTTP/1.1\r\n");
     client.print("Authorization: Basic ");
-    client.print(base64login);
+    client.print(authValEncoded);
     client.print("\r\n");
-    client.print("Host: 192.168.178.57\r\n");
+    client.print("Host: " + host +"\r\n");
     client.print("Content-Type:application/json\r\n");
     client.print("Content-Length: ");
     client.print(yourdata.length());
@@ -246,22 +249,20 @@ void send_data() {
   delay(500);
   
   //Send Temperature
-  yourdata = "{\"type\": \"value\", \"valueOrExpression\": \"" + String(t) + "\"}";
+  yourdata = "{\"type\": \"value\", \"valueOrExpression\": \"" + String(temperature) + "\"}";
     
     client.print("PATCH /api/variables/");
     client.print(espName);
     client.print("-tem HTTP/1.1\r\n");
-    client.print("Authorization: Basic YWRtaW46ZnVzc2Vs\r\n");
-    client.print("Host: 192.168.178.57\r\n");
+    client.print("Authorization: Basic ");
+    client.print(authValEncoded);
+    client.print("\r\n");
+    client.print("Host: " + host +"\r\n");
     client.print("Content-Type:application/json\r\n");
     client.print("Content-Length: ");
     client.print(yourdata.length());
     client.print("\r\n\r\n");
     client.print(yourdata);
-  
-  
-  
-  
   
   
 }
@@ -323,11 +324,4 @@ void loop(void)
   server.handleClient();
   
 } 
-
-
-
-
-
-
-
 
