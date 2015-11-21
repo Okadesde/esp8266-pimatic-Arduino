@@ -199,8 +199,8 @@ void send_data() {
   String yourdata;
   
   // get data
-  float h = 55; //dht.readHumidity();
-  float t = 1; //dht.readTemperature();
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
   
   //check erros
   if (isnan(h) || isnan(t)) {
@@ -208,7 +208,7 @@ void send_data() {
     return;
   }
   
-  temperature += t;
+  temperature = t;
   humidity    = h;
     
   char host_char_array[host.length()+1];
@@ -307,10 +307,6 @@ void setup(void)
       server.begin();
       Serial.println("HTTP server started");
       dht.begin();
-      
-
-
-
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////           MAIN 
 void loop(void)
